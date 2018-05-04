@@ -98,8 +98,41 @@ int main() {
           * Both are in between [-1, 1].
           *
           */
-          double steer_value;
-          double throttle_value;
+
+          Eigen::VectorXd curve_X = Eigen::VectorXd(6);
+          Eigen::VectorXd curve_Y = Eigen::VectorXd(6);
+
+          for (size_t i = 0; i < ptsx.size(); i++) {
+            curve_X[i] = (ptsx[i] - px) * cos(psi) + (ptsy[i] - py) * sin(psi);
+            curve_Y[i] = -(ptsx[i] - px) * sin(psi) + (ptsy[i] - py) * cos(psi);
+          }
+
+          Eigen::VectorXd curve = polyfit( curve_X,  curve_Y, 3);
+          Eigen::VectorXd state = Eigen::VectorXd(6);
+
+
+          const double Lf = 2.67;
+          double delta_angle = j[1]["steering_angle"];
+          delta_angle = delta_angle * (-1.0);
+          double acceleration = j[1]["throttle"];
+          
+          double latency = 0.1; 
+          double l_x = 0 + v * cos(0) * latency;
+          double l_y = 0 + v * sin(0) * latency;
+          double l_psi = 0 + v * delta_angle / Lf * latency;
+          double l_v = v + acceleration * latency; 
+          double cte = polyeval(curve, px);
+          double epsi = -atan(curve[1]);
+          double l_cte = cte + v * sin(epsi) * latency;
+          double l_epsi = epsi + v * delta_angle / Lf * latency;
+          
+          state << l_x, l_y, l_psi, l_v, l_cte, l_epsi;
+          cout << " state with latency: " << state << std::endl;
+
+          auto output = mpc.Solve(state, curve);
+
+          double steer_value = output[0] * -1;
+          double throttle_value = output[1];
 
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
@@ -108,8 +141,8 @@ int main() {
           msgJson["throttle"] = throttle_value;
 
           //Display the MPC predicted trajectory 
-          vector<double> mpc_x_vals;
-          vector<double> mpc_y_vals;
+          vector<double> mpc_x_vals = mpc.mpc_x;
+          vector<double> mpc_y_vals = mpc.mpc_y;
 
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Green line
@@ -121,8 +154,13 @@ int main() {
           vector<double> next_x_vals;
           vector<double> next_y_vals;
 
+          for(int i = 0; i<ptsx.size();i++){
+            next_x_vals.push_back(curve_X[i]);
+            next_y_vals.push_back(curve_Y[i]);
+          }
+
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
-          // the points in the simulator are connected by a Yellow line
+          // the points in the simulator are connected by a Yellow line TODO
 
           msgJson["next_x"] = next_x_vals;
           msgJson["next_y"] = next_y_vals;
@@ -139,7 +177,7 @@ int main() {
           //
           // NOTE: REMEMBER TO SET THIS TO 100 MILLISECONDS BEFORE
           // SUBMITTING.
-          this_thread::sleep_for(chrono::milliseconds(100));
+          this_thread::sleep_for(chrono::milliseconds(1000*latency));
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
         }
       } else {
