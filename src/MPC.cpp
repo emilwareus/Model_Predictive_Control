@@ -6,8 +6,8 @@
 using CppAD::AD;
 
 // TODO: Set the timestep length and duration
-size_t N = 30;
-double dt = 0.05; //Estimated that I wnat it to see 1 m into the future at 110 km/h, this is a rough round off
+size_t N = 10;
+double dt = 0.1; //Estimated that I wnat it to see 1 m into the future at 110 km/h, this is a rough round off
 // The reference velocity is set to 40 mph.
 double ref_v = 40;
 
