@@ -19,7 +19,7 @@ Cross track error (_cte_) and _ψ_-error (_eψ_) are used in the MPC cost functi
 IMAGE!!!
 
 ## Timestep Length and Elapsed Duration (N & dt)
-Student discusses the reasoning behind the chosen N (timestep length) and dt (elapsed duration between timesteps) values. Additionally the student details the previous values tried.
+At first, I reasoned I wanted to look quite far ahead into the the model to better react to future changes. So I started out with N = 50 and dt = 0.05. This proved to be none-optimal, as I'm running this program on a quite old machine. So my beliefe was that I overextended the max computational time allowed and the controler became very unpredictable. So I increased dt to 0.1 and keep reducing N until I got a sufficient ontroler at 40 mph. In the end, I ended up with dt = 0.11 and N = 10. If I had a faster machine, I believe I could have created a better controller, that could handle higher speeds, if I ran this on a faster cpu. 
 
 ## Polynomial Fitting and MPC Preprocessing
 A polynomial is fitted to waypoints.
