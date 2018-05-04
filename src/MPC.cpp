@@ -6,8 +6,11 @@
 using CppAD::AD;
 
 // TODO: Set the timestep length and duration
-size_t N = 30; ()
-double dt = 0.03; //Estimated that I wnat it to see 1 m into the future at 110 km/h, this is a rough round off
+size_t N = 30;
+double dt = 0.05; //Estimated that I wnat it to see 1 m into the future at 110 km/h, this is a rough round off
+// The reference velocity is set to 40 mph.
+double ref_v = 40;
+
 
 size_t nb_states = 6;
 size_t nb_actuators = 2;
@@ -39,21 +42,21 @@ class FG_eval {
 
 
     //Cost due to reference state
-    for (int t = 0; t < N; t++) {
+    for (uint t = 0; t < N; t++) {
       fg[0] += CppAD::pow(vars[cte_start + t], 2);
       fg[0] += CppAD::pow(vars[epsi_start + t], 2);
       fg[0] += CppAD::pow(vars[v_start + t] - ref_v, 2);
     }
 
     // Minimize the use of actuators.
-    for (int t = 0; t < N - 1; t++) {
+    for (uint t = 0; t < N - 1; t++) {
       //Increase the cost of the steering, as it needs to be more careful 
       fg[0] += 1000 *CppAD::pow(vars[delta_start + t], 2);
       fg[0] += CppAD::pow(vars[a_start + t], 2);
     }
 
     // Minimize the value gap between sequential actuations.
-    for (int t = 0; t < N - 2; t++) {
+    for (uint t = 0; t < N - 2; t++) {
       fg[0] += CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
       fg[0] += CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
     }
@@ -68,7 +71,7 @@ class FG_eval {
     fg[1 + epsi_start] = vars[epsi_start];
 
     // The rest of the constraints
-    for (int t = 1; t < N; t++) {
+    for (uint t = 1; t < N; t++) {
       // The state at time t+1 .
       AD<double> x1 = vars[x_start + t];
       AD<double> y1 = vars[y_start + t];
@@ -117,6 +120,13 @@ MPC::~MPC() {}
 vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   bool ok = true;
   size_t i;
+  double x = x0[0];
+  double y = x0[1];
+  double psi = x0[2];
+  double v = x0[3];
+  double cte = x0[4];
+  double epsi = x0[5];
+
   typedef CPPAD_TESTVECTOR(double) Dvector;
 
   //Number of variables
@@ -220,6 +230,6 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
 
   vector<double> output;
   output.push_back(solution.x[delta_start]);
-  output.push_back(solution.x[a_start])
+  output.push_back(solution.x[a_start]);
   return output;
 }
