@@ -10,13 +10,15 @@ The model of the car is escential to the MPC, as it is used to predict the movem
 The state is constructed with the position (_x,y_), direction (_ψ_) and velocity (_v_). 
 To control the car, two actuators were used. Stearing angle (_δ_) and speed actuator (_a_). 
 The following model was implemented: 
-IMAGE!!!
+
+![Model](Images/Model.JPG)
+
 This model predicts the next state of the car with the current actuators and state. 
 Actuator input was controled through the minimization of a cost function, and an optimal solution the the problem was used. 
 _Lf_ is a parameter provided by Udacity, which is the distance between the front of the car and its center. 
 
 Cross track error (_cte_) and _ψ_-error (_eψ_) are used in the MPC cost function.
-IMAGE!!!
+![Cost](Images/Cost.JPG)
 
 ## Timestep Length and Elapsed Duration (N & dt)
 At first, I reasoned I wanted to look quite far ahead into the the model to better react to future changes. So I started out with N = 50 and dt = 0.05. This proved to be none-optimal, as I'm running this program on a quite old machine. So my beliefe was that I overextended the max computational time allowed and the controler became very unpredictable. So I increased dt to 0.1 and keep reducing N until I got a sufficient ontroler at 40 mph. In the end, I ended up with dt = 0.11 and N = 10. If I had a faster machine, I believe I could have created a better controller, that could handle higher speeds, if I ran this on a faster cpu. 
