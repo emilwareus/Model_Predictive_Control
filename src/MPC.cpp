@@ -39,8 +39,6 @@ class FG_eval {
   
     //Initial cost 
     fg[0] = 0;
-
-
     //Cost due to reference state
     for (uint t = 0; t < N; t++) {
       fg[0] += CppAD::pow(vars[cte_start + t], 2);
@@ -113,10 +111,6 @@ class FG_eval {
       fg[1 + epsi_start + t] =
           epsi1 - ((psi0 - psides0) + v0 * delta0 / Lf * dt);
     }
-
-
-
-
   }
 };
 
@@ -163,8 +157,8 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   Dvector constraints_upperbound(n_constraints);
   //Values from Quiz
   for (size_t i = 0; i < delta_start; i++) {
-    vars_lowerbound[i] = -1.0e19;
-    vars_upperbound[i] = 1.0e19;
+    vars_lowerbound[i] = -1.0e3 ;
+    vars_upperbound[i] = 1.0e3 ;
   }
 
   for (size_t i = delta_start; i < a_start; i++) {
@@ -177,6 +171,10 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
     vars_upperbound[i] = 1.0;
   }
 
+  for (int i = 0; i < n_constraints; i++) { 
+    constraints_lowerbound[i] = 0;
+    constraints_upperbound[i] = 0;
+  }
 
   constraints_lowerbound[x_start] = x;
   constraints_lowerbound[y_start] = y;
@@ -184,7 +182,6 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   constraints_lowerbound[v_start] = v;
   constraints_lowerbound[cte_start] = cte;
   constraints_lowerbound[epsi_start] = epsi;
-
   constraints_upperbound[x_start] = x;
   constraints_upperbound[y_start] = y;
   constraints_upperbound[psi_start] = psi;
