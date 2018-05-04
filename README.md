@@ -18,31 +18,57 @@ The student implements Model Predictive Control that handles a 100 millisecond l
 
 
 ## Dependencies
+## Intalling Ipopt and CppAD
 
-* cmake >= 3.5
- * All OSes: [click here for installation instructions](https://cmake.org/install/)
-* make >= 4.1(mac, linux), 3.81(Windows)
-  * Linux: make is installed by default on most Linux distros
-  * Mac: [install Xcode command line tools to get make](https://developer.apple.com/xcode/features/)
-  * Windows: [Click here for installation instructions](http://gnuwin32.sourceforge.net/packages/make.htm)
-* gcc/g++ >= 5.4
-  * Linux: gcc / g++ is installed by default on most Linux distros
-  * Mac: same deal as make - [install Xcode command line tools]((https://developer.apple.com/xcode/features/)
-  * Windows: recommend using [MinGW](http://www.mingw.org/)
-* [uWebSockets](https://github.com/uWebSockets/uWebSockets)
-  * Run either `install-mac.sh` or `install-ubuntu.sh`.
-  * If you install from source, checkout to commit `e94b6e1`, i.e.
-    ```
-    git clone https://github.com/uWebSockets/uWebSockets
-    cd uWebSockets
-    git checkout e94b6e1
-    ```
-    Some function signatures have changed in v0.14.x. See [this PR](https://github.com/udacity/CarND-MPC-Project/pull/3) for more details.
+### Dependencies
 
-* **Ipopt and CppAD:** Please refer to [this document](https://github.com/udacity/CarND-MPC-Project/blob/master/install_Ipopt_CppAD.md) for installation instructions.
-* [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page). This is already part of the repo so you shouldn't have to worry about it.
-* Simulator. You can download these from the [releases tab](https://github.com/udacity/self-driving-car-sim/releases).
-* Not a dependency but read the [DATA.md](./DATA.md) for a description of the data sent back from the simulator.
+At this point in the curriculum students will have set up their SDC Term 2 environment and dependencies, with the exception of Ipopt, Fortran, and CppAD.  If you are setting up a fresh environment please refer to setup instructions starting [here](https://classroom.udacity.com/nanodegrees/nd013/parts/40f38239-66b6-46ec-ae68-03afd8a601c8/modules/0949fca6-b379-42af-a919-ee50aa304e6a/lessons/f758c44c-5e40-4e01-93b5-1a82aa4e044f/concepts/382ebfd6-1d55-4487-84a5-b6a5a4ba1e47).
+
+### Installation Process
+
+1.  Clone this repository and navigate to the cloned directory
+2.  [Download](https://www.coin-or.org/download/source/Ipopt/) the appropriate version of Ipopt (3.12.7 or higher) from the link below.  You may also use wget or a similiar command to download the source from the command line (see Linux instructions).
+3.  Follow the instructions for your environment
+
+* [Ipopt](https://projects.coin-or.org/Ipopt)
+  * **Mac:**
+    ```
+      brew tap udacity/CarND-MPC-Project https://github.com/udacity/CarND-MPC-Project
+      brew install ipopt --with-openblas
+    ```
+
+ - **For Linux and Windows Ubuntu BASH** Please note that for any particular command, including execution of ```.sh``` scripts, it may be necessary to add ```sudo``` prior to the command.  It is also a good practice to run ```sudo apt-get update``` prior to installation of new libraries.
+
+  * **Linux:**
+    * ```sudo apt-get install gfortran```
+    *  ```apt-get install unzip```
+    * ```wget https://www.coin-or.org/download/source/Ipopt/Ipopt-3.12.7.zip && unzip Ipopt-3.12.7.zip && rm Ipopt-3.12.7.zip```
+    * Call `install_ipopt.sh` with the source directory as the first argument, ex: ```./install_ipopt.sh Ipopt-3.12.7``` or ```bash install_ipopt.sh Ipopt-3.12.7```
+
+  * **Windows:** For Windows environments there are two main options
+    * Follow Linux instructions in the Ubuntu Bash environment. Please not that install instructions should be executed from the repository directory.  Changing to a Windows directory (ie ```cd /mnt/c .....```) can result in installation issues, particularly for Windows directories that contain spaces.
+    * Use the docker container described [here](https://classroom.udacity.com/nanodegrees/nd013/parts/40f38239-66b6-46ec-ae68-03afd8a601c8/modules/0949fca6-b379-42af-a919-ee50aa304e6a/lessons/f758c44c-5e40-4e01-93b5-1a82aa4e044f/concepts/16cf4a78-4fc7-49e1-8621-3450ca938b77), which comes pre-configured with Ipopt.
+* [CppAD](https://www.coin-or.org/CppAD/)
+  * Mac: `brew install cppad`
+  * Linux `sudo apt-get install cppad` or equivalent.
+  * **Windows:** For Windows environments there are two main options
+    * Follow Linux instructions in the Ubuntu Bash environment
+    * Use the docker container described [here](https://classroom.udacity.com/nanodegrees/nd013/parts/40f38239-66b6-46ec-ae68-03afd8a601c8/modules/0949fca6-b379-42af-a919-ee50aa304e6a/lessons/f758c44c-5e40-4e01-93b5-1a82aa4e044f/concepts/16cf4a78-4fc7-49e1-8621-3450ca938b77), which comes pre-configured with CppAD.
+
+### Troubleshooting
+
+* If challenges to installation are encountered (install script fails).  Please consult the forums.  Please feel free to submit additional tips or forum threads to the [issue reports repo](https://github.com/udacity/sdc-issue-reports), for potential inclusion in this document.
+*  **Some Mac users have experienced the following error:**
+     ```
+     Listening to port 4567
+     Connected!!!
+     mpc(4561,0x7ffff1eed3c0) malloc: *** error for object 0x7f911e007600: incorrect checksum for freed object
+     - object was probably modified after being freed.
+     *** set a breakpoint in malloc_error_break to debug
+     ```
+     This error has been resolved by updrading ipopt with
+     ```brew upgrade ipopt --with-openblas```
+     per this [forum post](https://discussions.udacity.com/t/incorrect-checksum-for-freed-object/313433/19)
 
 
 ## Basic Build Instructions
