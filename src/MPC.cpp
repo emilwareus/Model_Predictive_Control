@@ -6,10 +6,10 @@
 using CppAD::AD;
 
 // TODO: Set the timestep length and duration
-size_t N = 10;
+size_t N = 20;
 double dt = 0.1; //Estimated that I wnat it to see 1 m into the future at 110 km/h, this is a rough round off
 // The reference velocity is set to 40 mph.
-double ref_v = 40;
+double ref_v = 50;
 
 
 size_t nb_states = 6;
@@ -43,22 +43,22 @@ class FG_eval {
 
     //Cost due to reference state
     for (uint t = 0; t < N; t++) {
-      fg[0] += CppAD::pow(vars[cte_start + t], 2);
-      fg[0] += CppAD::pow(vars[epsi_start + t], 2);
-      fg[0] += CppAD::pow(vars[v_start + t] - ref_v, 2);
+      fg[0] += 8.4*CppAD::pow(vars[cte_start + t], 2);
+      fg[0] += 0.32*CppAD::pow(vars[epsi_start + t], 2);
+      fg[0] += 0.261*CppAD::pow(vars[v_start + t] - ref_v, 2);
     }
 
     // Minimize the use of actuators.
     for (uint t = 0; t < N - 1; t++) {
       //Increase the cost of the steering, as it needs to be more careful 
-      fg[0] += 1000 *CppAD::pow(vars[delta_start + t], 2);
-      fg[0] += CppAD::pow(vars[a_start + t], 2);
+      fg[0] += 600000 *CppAD::pow(vars[delta_start + t], 2);
+      fg[0] += 17.1* CppAD::pow(vars[a_start + t], 2);
     }
 
     // Minimize the value gap between sequential actuations.
     for (uint t = 0; t < N - 2; t++) {
-      fg[0] += CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
-      fg[0] += CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
+      fg[0] += 600000* CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
+      fg[0] += 0.00001*CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
     }
 
 
