@@ -91,6 +91,8 @@ int main() {
           double py = j[1]["y"];
           double psi = j[1]["psi"];
           double v = j[1]["speed"];
+          double acceleration = j[1]["throttle"];
+          double delta_angle = j[1]["steering_angle"];
 
           /*
           * TODO: Calculate steering angle and throttle using MPC.
@@ -103,35 +105,37 @@ int main() {
           Eigen::VectorXd curve_Y = Eigen::VectorXd(6);
 
           for (size_t i = 0; i < ptsx.size(); i++) {
-            curve_X[i] = (ptsx[i] - px) * cos(psi) + (ptsy[i] - py) * sin(psi);
-            curve_Y[i] = -(ptsx[i] - px) * sin(psi) + (ptsy[i] - py) * cos(psi);
+            curve_X[i] = (ptsx[i] - px) * cos(-psi) - (ptsy[i] - py) * sin(-psi);
+            curve_Y[i] = (ptsx[i] - px) * sin(-psi) + (ptsy[i] - py) * cos(-psi);
           }
 
           Eigen::VectorXd curve = polyfit( curve_X,  curve_Y, 3);
           Eigen::VectorXd state = Eigen::VectorXd(6);
 
+          const double cte = curve[0];
+          const double epsi = -atan(curve[1]); //-f'(0)
+
 
           const double Lf = 2.67;
-          double delta_angle = j[1]["steering_angle"];
+          
           delta_angle = delta_angle * (-1.0);
-          double acceleration = j[1]["throttle"];
           
           double latency = 0.1; 
           double l_x = 0 + v * cos(0) * latency;
           double l_y = 0 + v * sin(0) * latency;
-          double l_psi = 0 + v * delta_angle / Lf * latency;
+          double l_psi = 0 + v * delta_angle * latency / Lf;
           double l_v = v + acceleration * latency; 
           double cte = polyeval(curve, px);
           double epsi = -atan(curve[1]);
           double l_cte = cte + v * sin(epsi) * latency;
           double l_epsi = epsi + v * delta_angle / Lf * latency;
-          
+
           state << l_x, l_y, l_psi, l_v, l_cte, l_epsi;
           cout << " state with latency: " << state << std::endl;
 
           auto output = mpc.Solve(state, curve);
 
-          double steer_value = output[0] * -1;
+          double steer_value = -output[0] /deg2rad(25);
           double throttle_value = output[1];
 
           json msgJson;
