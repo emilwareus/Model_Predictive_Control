@@ -11,7 +11,6 @@ double dt = 0.1; //Estimated that I wnat it to see 1 m into the future at 110 km
 // The reference velocity is set to 40 mph.
 double ref_v = 50;
 
-
 size_t nb_states = 6;
 size_t nb_actuators = 2;
 
@@ -54,9 +53,9 @@ class FG_eval {
     fg[0] = 0;
     //Cost due to reference state
     for (int i = 0; i < N; i++) {
-      fg[0] += W_CTE * CppAD::pow(vars[cte_start + i] - REF_CTE, 2);
-      fg[0] += W_EPSI * CppAD::pow(vars[epsi_start + i] - REF_EPSI, 2);
-      fg[0] += W_V * CppAD::pow(vars[v_start + i] - REF_V, 2);
+      fg[0] += W_CTE * CppAD::pow(vars[cte_start + i], 2);
+      fg[0] += W_EPSI * CppAD::pow(vars[epsi_start + i], 2);
+      fg[0] += W_V * CppAD::pow(vars[v_start + i] - ref_v, 2);
     }
 
     // Minimize the use of actuators.
