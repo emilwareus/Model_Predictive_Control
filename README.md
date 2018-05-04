@@ -21,14 +21,9 @@ IMAGE!!!
 ## Timestep Length and Elapsed Duration (N & dt)
 At first, I reasoned I wanted to look quite far ahead into the the model to better react to future changes. So I started out with N = 50 and dt = 0.05. This proved to be none-optimal, as I'm running this program on a quite old machine. So my beliefe was that I overextended the max computational time allowed and the controler became very unpredictable. So I increased dt to 0.1 and keep reducing N until I got a sufficient ontroler at 40 mph. In the end, I ended up with dt = 0.11 and N = 10. If I had a faster machine, I believe I could have created a better controller, that could handle higher speeds, if I ran this on a faster cpu. 
 
-## Polynomial Fitting and MPC Preprocessing
-A polynomial is fitted to waypoints.
+## MPC
 
-If the student preprocesses waypoints, the vehicle state, and/or actuators prior to the MPC procedure it is described.
-
-## Model Predictive Control with Latency
-The student implements Model Predictive Control that handles a 100 millisecond latency. Student provides details on how they deal with latency.
-
+The datapoints in map-space were transformed to vehicle-space, and a polynomial was fitted to these points. These points are then project into the future with the vehicle model to handle the latency of 100 ms. These projected points were passed to the state and given to the MPC.Solve function. In this function, and optimizer was uesed to solve for the optimal actuation output to minimize the cost. 
 
 ## Dependencies
 ## Intalling Ipopt and CppAD
