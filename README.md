@@ -1,9 +1,22 @@
 # A C++ Implementation of Model Predictive Control 
 Self-Driving Car Engineer Nanodegree Program
-
 ---
+This is a project in the course Self-Driving Car Engineer Nanodegree program given by Udacity. Throughout this course I get to learn different concepts that are important learnings for a career within autonomous vehicles. This repo contains a Model Predictive Controler that controls a SDC in the Udacity simulator. 
+
 ## Mdoel 
-Student describes their model in detail. This includes the state, actuators and update equations.
+
+The model of the car is escential to the MPC, as it is used to predict the movement of the car with the input of the actuators. In this controler, a simplified model was used which did not include tire force, gracity, mass and more.. 
+
+The state is constructed with the position (_x,y_), direction (_ψ_) and velocity (_v_). 
+To control the car, two actuators were used. Stearing angle (_δ_) and speed actuator (_a_). 
+The following model was implemented: 
+IMAGE!!!
+This model predicts the next state of the car with the current actuators and state. 
+Actuator input was controled through the minimization of a cost function, and an optimal solution the the problem was used. 
+_Lf_ is a parameter provided by Udacity, which is the distance between the front of the car and its center. 
+
+Cross track error (_cte_) and _ψ_-error (_eψ_) are used in the MPC cost function.
+IMAGE!!!
 
 ## Timestep Length and Elapsed Duration (N & dt)
 Student discusses the reasoning behind the chosen N (timestep length) and dt (elapsed duration between timesteps) values. Additionally the student details the previous values tried.
