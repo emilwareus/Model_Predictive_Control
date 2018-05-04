@@ -134,7 +134,7 @@ int main() {
 
           double steer_value = output[0] * -1/deg2rad(25);
           double throttle_value = output[1];
-
+	  cout<<steer_value << endl;
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
           // Otherwise the values will be in between [-deg2rad(25), deg2rad(25] instead of [-1, 1].

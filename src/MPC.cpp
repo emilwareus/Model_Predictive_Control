@@ -9,7 +9,7 @@ using CppAD::AD;
 size_t N = 10;
 double dt = 0.1; //Estimated that I wnat it to see 1 m into the future at 110 km/h, this is a rough round off
 // The reference velocity is set to 40 mph.
-double ref_v = 40;
+double ref_v = 75;
 
 
 size_t nb_states = 6;
@@ -43,13 +43,13 @@ class FG_eval {
     for (uint t = 0; t < N; t++) {
       fg[0] += CppAD::pow(vars[cte_start + t], 2);
       fg[0] += CppAD::pow(vars[epsi_start + t], 2);
-      fg[0] += 10*CppAD::pow(vars[v_start + t] - ref_v, 2);
+      fg[0] += CppAD::pow(vars[v_start + t] - ref_v, 2);
     }
 
     // Minimize the use of actuators.
     for (uint t = 0; t < N - 1; t++) {
       //Increase the cost of the steering, as it needs to be more careful 
-      fg[0] += 10000 *CppAD::pow(vars[delta_start + t], 2);
+      fg[0] += 1000 * CppAD::pow(vars[delta_start + t], 2);
       fg[0] += CppAD::pow(vars[a_start + t], 2);
     }
 
@@ -157,8 +157,8 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   Dvector constraints_upperbound(n_constraints);
   //Values from Quiz
   for (size_t i = 0; i < delta_start; i++) {
-    vars_lowerbound[i] = -1.0e3 ;
-    vars_upperbound[i] = 1.0e3 ;
+    vars_lowerbound[i] = -1.0e19 ;
+    vars_upperbound[i] = 1.0e19 ;
   }
 
   for (size_t i = delta_start; i < a_start; i++) {
@@ -224,7 +224,7 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
 
   // Cost
   auto cost = solution.obj_value;
-  std::cout << "Cost " << cost << std::endl;
+  //std::cout << "Cost " << cost << std::endl;
 
 
 
