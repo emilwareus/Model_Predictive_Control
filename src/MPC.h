@@ -24,7 +24,7 @@
 // The reference velocity is set to 77.5 mph.
 #define REF_CTE 0
 #define REF_EPSI 0
-#define REF_V 77.5
+#define REF_V 40
 
 // Set weights parameters for the cost function
 #define W_CTE 8.4
