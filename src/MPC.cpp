@@ -25,6 +25,19 @@ size_t epsi_start = cte_start + N;
 size_t delta_start = epsi_start + N;
 size_t a_start = delta_start + N - 1;
 
+#define W_CTE 8.4
+#define W_EPSI 0.32
+#define W_V 0.261
+#define W_DELTA 600000
+#define W_A 17.1
+#define W_DDELTA 0.01
+#define W_DA 0.00001
+
+// Set lower and upper limits for variables.
+#define DED25RAD 0.436332 // 25 deg in rad, used as delta bound
+#define MAXTHR 1.0 // Maximal a value
+#define BOUND 1.0e3 // Bound value for other variables
+
 
 const double Lf = 2.67;
 
@@ -40,23 +53,22 @@ class FG_eval {
     //Initial cost 
     fg[0] = 0;
     //Cost due to reference state
-    for (uint t = 0; t < N; t++) {
-      fg[0] += CppAD::pow(vars[cte_start + t], 2);
-      fg[0] += CppAD::pow(vars[epsi_start + t], 2);
-      fg[0] += CppAD::pow(vars[v_start + t] - ref_v, 2);
+    for (int i = 0; i < N; i++) {
+      fg[0] += W_CTE * CppAD::pow(vars[cte_start + i] - REF_CTE, 2);
+      fg[0] += W_EPSI * CppAD::pow(vars[epsi_start + i] - REF_EPSI, 2);
+      fg[0] += W_V * CppAD::pow(vars[v_start + i] - REF_V, 2);
     }
 
     // Minimize the use of actuators.
-    for (uint t = 0; t < N - 1; t++) {
-      //Increase the cost of the steering, as it needs to be more careful 
-      fg[0] += 1000 *CppAD::pow(vars[delta_start + t], 2);
-      fg[0] += CppAD::pow(vars[a_start + t], 2);
+    for (int i = 0; i < N - 1; i++) {
+      fg[0] += W_DELTA * CppAD::pow(vars[delta_start + i], 2);
+      fg[0] += W_A * CppAD::pow(vars[a_start + i], 2);
     }
 
     // Minimize the value gap between sequential actuations.
-    for (uint t = 0; t < N - 2; t++) {
-      fg[0] += CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
-      fg[0] += CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
+    for (int i = 0; i < N - 2; i++) {
+      fg[0] += W_DDELTA * CppAD::pow(vars[delta_start + i + 1] - vars[delta_start + i], 2);
+      fg[0] += W_DA * CppAD::pow(vars[a_start + i + 1] - vars[a_start + i], 2);
     }
 
 
