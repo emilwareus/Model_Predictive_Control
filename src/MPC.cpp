@@ -9,7 +9,7 @@ using CppAD::AD;
 size_t N = 10;
 double dt = 0.1; //Estimated that I wnat it to see 1 m into the future at 110 km/h, this is a rough round off
 // The reference velocity is set to 40 mph.
-double ref_v = 75;
+double ref_v = 40;
 
 
 size_t nb_states = 6;
