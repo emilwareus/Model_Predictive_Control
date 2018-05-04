@@ -43,22 +43,22 @@ class FG_eval {
 
     //Cost due to reference state
     for (uint t = 0; t < N; t++) {
-      fg[0] += 8.4*CppAD::pow(vars[cte_start + t], 2);
-      fg[0] += 0.32*CppAD::pow(vars[epsi_start + t], 2);
-      fg[0] += 0.261*CppAD::pow(vars[v_start + t] - ref_v, 2);
+      fg[0] += CppAD::pow(vars[cte_start + t], 2);
+      fg[0] += CppAD::pow(vars[epsi_start + t], 2);
+      fg[0] += CppAD::pow(vars[v_start + t] - ref_v, 2);
     }
 
     // Minimize the use of actuators.
     for (uint t = 0; t < N - 1; t++) {
       //Increase the cost of the steering, as it needs to be more careful 
-      fg[0] += 600000 *CppAD::pow(vars[delta_start + t], 2);
-      fg[0] += 17.1* CppAD::pow(vars[a_start + t], 2);
+      fg[0] += 1000 *CppAD::pow(vars[delta_start + t], 2);
+      fg[0] += CppAD::pow(vars[a_start + t], 2);
     }
 
     // Minimize the value gap between sequential actuations.
     for (uint t = 0; t < N - 2; t++) {
-      fg[0] += 600000* CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
-      fg[0] += 0.00001*CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
+      fg[0] += CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
+      fg[0] += CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
     }
 
 
@@ -92,8 +92,10 @@ class FG_eval {
       AD<double> delta0 = vars[delta_start + t - 1];
       AD<double> a0 = vars[a_start + t - 1];
 
-      AD<double> f0 = coeffs[0] + coeffs[1] * x0;
-      AD<double> psides0 = CppAD::atan(coeffs[1]);
+      AD<double> f0 = coeffs[0] + coeffs[1] * x0 + 
+              coeffs[2] * CppAD::pow(x0, 2) + coeffs[3] * CppAD::pow(x0, 3);;
+      AD<double> psides0 = CppAD::atan(coeffs[1] + 2 * coeffs[2] *
+                           x0 + 3 * coeffs[3] * CppAD::pow(x0, 2));
 
       fg[1 + x_start + t] = x1 - (x0 + v0 * CppAD::cos(psi0) * dt);
       fg[1 + y_start + t] = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
