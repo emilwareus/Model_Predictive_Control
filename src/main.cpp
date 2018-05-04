@@ -11,6 +11,8 @@
 
 // for convenience
 using json = nlohmann::json;
+using namespace std;
+using namespace Eigen;
 
 // For converting back and forth between radians and degrees.
 constexpr double pi() { return M_PI; }
@@ -44,8 +46,7 @@ double polyeval(Eigen::VectorXd coeffs, double x) {
 // Fit a polynomial.
 // Adapted from
 // https://github.com/JuliaMath/Polynomials.jl/blob/master/src/Polynomials.jl#L676-L716
-Eigen::VectorXd polyfit(Eigen::VectorXd xvals, Eigen::VectorXd yvals,
-                        int order) {
+Eigen::VectorXd polyfit(Eigen::VectorXd xvals, Eigen::VectorXd yvals, int order) {
   assert(xvals.size() == yvals.size());
   assert(order >= 1 && order <= xvals.size() - 1);
   Eigen::MatrixXd A(xvals.size(), order + 1);
@@ -53,7 +54,6 @@ Eigen::VectorXd polyfit(Eigen::VectorXd xvals, Eigen::VectorXd yvals,
   for (int i = 0; i < xvals.size(); i++) {
     A(i, 0) = 1.0;
   }
-
   for (int j = 0; j < xvals.size(); j++) {
     for (int i = 0; i < order; i++) {
       A(j, i + 1) = A(j, i) * xvals(j);
@@ -67,12 +67,9 @@ Eigen::VectorXd polyfit(Eigen::VectorXd xvals, Eigen::VectorXd yvals,
 
 int main() {
   uWS::Hub h;
-
   // MPC is initialized here!
   MPC mpc;
-
-  h.onMessage([&mpc](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
-                     uWS::OpCode opCode) {
+  h.onMessage([&mpc](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -87,85 +84,76 @@ int main() {
           // j[1] is the data JSON object
           vector<double> ptsx = j[1]["ptsx"];
           vector<double> ptsy = j[1]["ptsy"];
-          double px = j[1]["x"];
-          double py = j[1]["y"];
-          double psi = j[1]["psi"];
-          double v = j[1]["speed"];
-          double acceleration = j[1]["throttle"];
-          double delta_angle = j[1]["steering_angle"];
-
+          const double px = j[1]["x"];
+          const double py = j[1]["y"];
+          const double psi = j[1]["psi"];
+          const double v_raw = j[1]["speed"]; 
+          const double v = v_raw * 0.447;// mph to m/s
+          const double steering_angle = j[1]["steering_angle"];
+          const double throttle = j[1]["throttle"];
+          
+          const int N = ptsx.size(); // Number of waypoints
+          const double cospsi = cos(-psi);
+          const double sinpsi = sin(-psi);
           /*
-          * TODO: Calculate steering angle and throttle using MPC.
-          *
+          * Calculate steeering angle and throttle using MPC.
           * Both are in between [-1, 1].
-          *
           */
+          const double dt = DT;
+          const double Lf = LF;
 
-          Eigen::VectorXd curve_X = Eigen::VectorXd(6);
-          Eigen::VectorXd curve_Y = Eigen::VectorXd(6);
-
-          for (size_t i = 0; i < ptsx.size(); i++) {
-            curve_X[i] = (ptsx[i] - px) * cos(psi) + (ptsy[i] - py) * sin(psi);
-            curve_Y[i] = -(ptsx[i] - px) * sin(psi) + (ptsy[i] - py) * cos(psi);
+          // Convert to the vehicle coordinate system
+          VectorXd x_veh(N);
+          VectorXd y_veh(N);
+          for(int i = 0; i < N; i++) {
+            const double dx = ptsx[i] - px;
+            const double dy = ptsy[i] - py;
+            x_veh[i] = dx * cospsi - dy * sinpsi;
+            y_veh[i] = dy * cospsi + dx * sinpsi;
           }
-
-          Eigen::VectorXd curve = polyfit( curve_X,  curve_Y, 3);
-          Eigen::VectorXd state = Eigen::VectorXd(6);
-
-
-          const double Lf = 2.67;
           
-          delta_angle = delta_angle * (-1.0);
+          auto coeffs = polyfit(x_veh, y_veh, 3); // Fit waypoints
+          const double cte = coeffs[0];
+          const double epsi = -atan(coeffs[1]); //-f'(0)
           
-          double latency = 0.1; 
-          double l_x = 0 + v * cos(0) * latency;
-          double l_y = 0 + v * sin(0) * latency;
-          double l_psi = 0 + v * delta_angle / Lf * latency;
-          double l_v = v + acceleration * latency; 
-          double cte = polyeval(curve, px);
-          double epsi = -atan(curve[1]);
-          double l_cte = cte + v * sin(epsi) * latency;
-          double l_epsi = epsi + v * delta_angle / Lf * latency;
+          // Kinematic model is used to predict vehicle state at the actual
+          // moment of control (current time + delay dt)
+          const double px_act = v * dt;
+          const double py_act = 0;
+          const double psi_act = - v * steering_angle * dt / Lf;
+          const double v_act = v + throttle * dt;
+          const double cte_act = cte + v * sin(epsi) * dt;
+          const double epsi_act = epsi + psi_act; 
+          VectorXd state(6);
+          state << px_act, py_act, psi_act, v_act, cte_act, epsi_act;
+          vector<double> mpc_results = mpc.Solve(state, coeffs);
           
-          state << l_x, l_y, l_psi, l_v, l_cte, l_epsi;
-          //cout << " state with latency: " << state << std::endl;
-
-          auto output = mpc.Solve(state, curve);
-
-          double steer_value = output[0] * -1/deg2rad(25);
-          double throttle_value = output[1];
+          double steer_value = mpc_results[0]/ deg2rad(25); // convert to [-1..1] range
+          double throttle_value = mpc_results[1];
 
           json msgJson;
-          // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
-          // Otherwise the values will be in between [-deg2rad(25), deg2rad(25] instead of [-1, 1].
-          msgJson["steering_angle"] = steer_value;
+          msgJson["steering_angle"] = -steer_value;
           msgJson["throttle"] = throttle_value;
 
-          //Display the MPC predicted trajectory 
-          vector<double> mpc_x_vals = mpc.mpc_x;
-          vector<double> mpc_y_vals = mpc.mpc_y;
-
+          //Display the MPC predicted trajectory
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Green line
-
+          vector<double> mpc_x_vals = mpc.mpc_x;
+          vector<double> mpc_y_vals = mpc.mpc_y;
           msgJson["mpc_x"] = mpc_x_vals;
           msgJson["mpc_y"] = mpc_y_vals;
 
           //Display the waypoints/reference line
+          //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
+          // the points in the simulator are connected by a Yellow line
           vector<double> next_x_vals;
           vector<double> next_y_vals;
-
           for(int i = 0; i<ptsx.size();i++){
-            next_x_vals.push_back(curve_X[i]);
-            next_y_vals.push_back(curve_Y[i]);
+            next_x_vals.push_back(x_veh[i]);
+            next_y_vals.push_back(y_veh[i]);
           }
-
-          //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
-          // the points in the simulator are connected by a Yellow line TODO
-
           msgJson["next_x"] = next_x_vals;
           msgJson["next_y"] = next_y_vals;
-
 
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
           //std::cout << msg << std::endl;
@@ -178,7 +166,7 @@ int main() {
           //
           // NOTE: REMEMBER TO SET THIS TO 100 MILLISECONDS BEFORE
           // SUBMITTING.
-          this_thread::sleep_for(chrono::milliseconds(100));
+          this_thread::sleep_for(chrono::milliseconds(int(dt*1000))); //s to ms
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
         }
       } else {
@@ -190,8 +178,7 @@ int main() {
   });
 
   // We don't need this since we're not using HTTP but if it's removed the
-  // program
-  // doesn't compile :-(
+  // program doesn't compile :-(
   h.onHttpRequest([](uWS::HttpResponse *res, uWS::HttpRequest req, char *data,
                      size_t, size_t) {
     const std::string s = "<h1>Hello world!</h1>";
